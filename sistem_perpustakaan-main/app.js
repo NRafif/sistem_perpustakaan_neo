@@ -19,6 +19,7 @@ app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "src", "views"));
 
 app.use(express.static(path.join(__dirname, "public")));
+app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use(
@@ -61,6 +62,37 @@ app.get("/books", (req, res) => {
 });
 
 app.use("/member", memberRoutes);
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+    console.error("Error:", err);
+    
+    // Jika request mengharapkan JSON (API)
+    if (req.headers.accept && req.headers.accept.includes('application/json')) {
+        return res.status(err.status || 500).json({
+            error: process.env.NODE_ENV === 'production' 
+                ? 'Internal Server Error' 
+                : err.message
+        });
+    }
+    
+    // Untuk EJS views, redirect ke login dengan error message di session
+    req.session.error = process.env.NODE_ENV === 'production' 
+        ? 'Terjadi kesalahan pada server' 
+        : err.message;
+    res.redirect('/login');
+});
+
+// 404 handler
+app.use((req, res) => {
+    // Jika request mengharapkan JSON (API)
+    if (req.headers.accept && req.headers.accept.includes('application/json')) {
+        return res.status(404).json({ error: 'Not Found' });
+    }
+    
+    // Untuk EJS views, redirect ke halaman utama atau tampilkan 404
+    res.status(404).redirect('/');
+});
 
 // Untuk Vercel, export app sebagai module (Vercel akan handle server)
 // Untuk development lokal, tetap bisa menggunakan app.listen
