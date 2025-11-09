@@ -41,12 +41,7 @@ app.use((req, res, next) => {
     next();
 });
 
-app.use("/", authRoutes);
-app.use("/admin/books", bookRoutes);
-app.use("/", memberRoutes);
-app.use("/admin", adminRoutes);
-
-
+// Route utama harus didefinisikan sebelum route lainnya
 app.get("/", (req, res) => {
     if (req.session.isLoggedIn) {
         if (req.session.user.role === "admin") {
@@ -61,6 +56,11 @@ app.get("/books", (req, res) => {
     res.redirect("/katalog");
 });
 
+// Routes
+app.use("/", authRoutes);
+app.use("/admin/books", bookRoutes);
+app.use("/", memberRoutes);
+app.use("/admin", adminRoutes);
 app.use("/member", memberRoutes);
 
 // Error handling middleware
@@ -94,7 +94,7 @@ app.use((req, res) => {
     res.status(404).redirect('/');
 });
 
-// Untuk Vercel, export app sebagai module (Vercel akan handle server)
+// Untuk Vercel, export app sebagai handler function
 // Untuk development lokal, tetap bisa menggunakan app.listen
 if (!process.env.VERCEL) {
     app.listen(PORT, () => {
@@ -102,4 +102,6 @@ if (!process.env.VERCEL) {
     });
 }
 
+// Export untuk Vercel - Vercel memerlukan handler function
+// Untuk Express, kita bisa langsung export app karena Express app adalah handler function
 module.exports = app;
